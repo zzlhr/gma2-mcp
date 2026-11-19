@@ -1,0 +1,2 @@
+[console_scripts]
+gma2-mcp = src.server:main

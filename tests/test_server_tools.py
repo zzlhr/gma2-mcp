@@ -1175,44 +1175,6 @@ class TestSendRawCommandVerified:
         assert "OBJECT DOES NOT EXIST" in result
 
 
-class TestImportCueCommands:
-    @pytest.mark.asyncio
-    @patch("src.server.get_client")
-    async def test_executes_commands_in_order(self, mock_get):
-        from src.server import import_cue_commands
-
-        client = _mock_client()
-        mock_get.return_value = client
-        commands = ["Fixture 7 At 80", "Store Cue 1 Executor 1.201"]
-
-        result = await import_cue_commands(commands)
-
-        assert "Executed 2 commands" in result
-        assert [call.args[0] for call in client.execute.await_args_list] == commands
-
-    @pytest.mark.asyncio
-    @patch("src.server.get_client")
-    async def test_stops_at_first_console_error(self, mock_get):
-        from src.server import import_cue_commands
-
-        client = _mock_client()
-        client.execute = AsyncMock(side_effect=[_ok_result(), _err_result()])
-        mock_get.return_value = client
-
-        result = await import_cue_commands(["Fixture 7 At 80", "Store Cue 1", "Assign Cue 1"])
-
-        assert "cue command 2/3 failed" in result
-        assert client.execute.await_count == 2
-
-    @pytest.mark.asyncio
-    async def test_rejects_multiline_commands(self):
-        from src.server import import_cue_commands
-
-        result = await import_cue_commands(["ClearAll\nBlind Off"])
-
-        assert "single-line" in result
-
-
 def _ok_result(echo="OK"):
     from src.execution import ExecutionResult
 

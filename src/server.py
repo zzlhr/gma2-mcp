@@ -416,7 +416,6 @@ mcp = FastMCP(
 
     Cue Management:
       - store_cue: Store current programmer state as a cue
-      - import_cue_commands: Execute one cue's ordered command batch, stopping on error
       - delete_cue: Delete a cue
       - goto_cue_tool: Jump to a specific cue in an executor or sequence
       - set_cue_cmd: Assign a command to a cue's CMD field
@@ -2183,37 +2182,6 @@ async def send_raw_command(command: str) -> str:
     client = await get_client()
     result = await client.execute(command)
     return result.summary()
-
-
-@mcp.tool()
-@handle_connection_error
-async def import_cue_commands(commands: list[str]) -> str:
-    """Execute one cue's ordered command batch and stop at the first MA2 error.
-
-    Args:
-        commands: Ordered fixture, Store, and Assign commands for one cue
-
-    Returns:
-        str: Success count or the first failed command and console response
-    """
-    if not commands or len(commands) > 256:
-        return "Error: a cue batch must contain between 1 and 256 commands"
-    if any(
-        not isinstance(command, str)
-        or not command.strip()
-        or len(command) > 256
-        or "\r" in command
-        or "\n" in command
-        for command in commands
-    ):
-        return "Error: cue commands must be single-line strings of at most 256 characters"
-
-    client = await get_client()
-    for index, command in enumerate(commands, start=1):
-        result = await client.execute(command)
-        if not result.ok:
-            return f"Error: cue command {index}/{len(commands)} failed: {result.summary()}"
-    return f"Executed {len(commands)} commands for one cue"
 
 
 # ============================================================
